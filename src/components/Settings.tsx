@@ -71,6 +71,7 @@ function SettingRow({
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             onKeyDown={onKey}
+            inputMode="numeric"
             className="w-32 h-9 text-right text-sm"
             autoFocus
           />
@@ -137,6 +138,7 @@ function DailyRow({
               type="number"
               value={draftRate}
               onChange={(e) => setDraftRate(e.target.value)}
+              inputMode="numeric"
               className="w-24 h-8 text-right text-sm"
               autoFocus
             />
@@ -147,6 +149,7 @@ function DailyRow({
               type="number"
               value={draftDays}
               onChange={(e) => setDraftDays(e.target.value)}
+              inputMode="numeric"
               className="w-24 h-8 text-right text-sm"
             />
           </div>

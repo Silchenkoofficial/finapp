@@ -3,14 +3,60 @@ import type { FinanceConfig } from '../types';
 import { formatRub, loanMonthsLeft } from '../lib/calc';
 import { Card, CardContent } from './ui/card';
 import { Progress } from './ui/progress';
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter } from './ui/drawer';
 import { Input } from './ui/input';
-import { Label } from './ui/label';
 import { Button } from './ui/button';
 
 interface Props {
   config: FinanceConfig;
   onUpdateLoan: (updates: Partial<FinanceConfig['loan']>) => void;
+}
+
+function InlineField({
+  value,
+  onSave,
+  className,
+  children,
+}: {
+  value: number;
+  onSave: (v: number) => void;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState('');
+
+  const start = () => { setDraft(String(value)); setEditing(true); };
+  const save = () => {
+    const n = Number(draft);
+    if (!isNaN(n) && n >= 0) onSave(n);
+    setEditing(false);
+  };
+  const onKey = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') save();
+    if (e.key === 'Escape') setEditing(false);
+  };
+
+  if (editing) {
+    return (
+      <div className="flex items-center gap-1.5 shrink-0">
+        <Input
+          inputMode="numeric"
+          value={draft}
+          onChange={e => setDraft(e.target.value)}
+          onKeyDown={onKey}
+          className="w-32 h-8 text-right text-sm"
+          autoFocus
+        />
+        <Button size="sm" onClick={save} className="h-8 px-2.5 text-xs">OK</Button>
+      </div>
+    );
+  }
+
+  return (
+    <button onClick={start} className={className}>
+      {children}
+    </button>
+  );
 }
 
 export function LoanTracker({ config, onUpdateLoan }: Props) {
@@ -19,24 +65,6 @@ export function LoanTracker({ config, onUpdateLoan }: Props) {
   const monthsLeft = loanMonthsLeft(loan.currentBalance, monthlyPayment);
   const paid = loan.startBalance - loan.currentBalance;
   const progressPct = Math.min(100, Math.round((paid / loan.startBalance) * 100));
-
-  const [editing, setEditing] = useState<null | 'balance' | 'early' | 'mandatory' | 'start'>(null);
-  const [val, setVal] = useState('');
-
-  const open = (field: typeof editing, current: number) => {
-    setEditing(field);
-    setVal(String(current));
-  };
-
-  const save = () => {
-    const num = Number(val);
-    if (isNaN(num) || num < 0) return;
-    if (editing === 'balance') onUpdateLoan({ currentBalance: num });
-    else if (editing === 'early') onUpdateLoan({ earlyPayment: num });
-    else if (editing === 'mandatory') onUpdateLoan({ mandatoryPayment: num });
-    else if (editing === 'start') onUpdateLoan({ startBalance: num });
-    setEditing(null);
-  };
 
   const payoffDate = new Date();
   payoffDate.setMonth(payoffDate.getMonth() + monthsLeft);
@@ -47,143 +75,103 @@ export function LoanTracker({ config, onUpdateLoan }: Props) {
   const savedMonths = Math.max(0, minMonthsLeft - monthsLeft);
 
   return (
-    <>
-      <div className="space-y-4">
-        {/* Main progress card */}
-        <Card className="rounded-2xl border-0 bg-[#111827] text-white overflow-hidden">
-          <CardContent className="p-5">
-            <div className="text-[10px] tracking-widest text-white/30 uppercase mb-1">Остаток долга</div>
-            <button
-              className="text-3xl font-bold text-white hover:opacity-70 transition-opacity block mb-1"
-              onClick={() => open('balance', loan.currentBalance)}
-            >
+    <div className="space-y-4">
+      {/* Main progress card */}
+      <Card className="rounded-2xl border-0 bg-[#111827] text-white overflow-hidden">
+        <CardContent className="p-5">
+          <div className="text-[10px] tracking-widest text-white/30 uppercase mb-1">Остаток долга</div>
+          <InlineField
+            value={loan.currentBalance}
+            onSave={v => onUpdateLoan({ currentBalance: v })}
+            className="text-left"
+          >
+            <div className="text-3xl font-bold text-white hover:opacity-70 transition-opacity mb-1">
               {formatRub(loan.currentBalance)}
-            </button>
-            <div className="text-sm text-white/50 mb-4">нажми чтобы обновить</div>
-
-            <div className="mb-3">
-              <Progress value={progressPct} className="h-2.5 bg-white/10" indicatorClassName="bg-emerald-400" />
             </div>
-            <div className="flex justify-between text-xs text-white/40">
-              <span>Выплачено {formatRub(paid)}</span>
-              <span>{progressPct}%</span>
-            </div>
-          </CardContent>
-        </Card>
+            <div className="text-sm text-white/50">нажми чтобы обновить</div>
+          </InlineField>
 
-        {/* Stats grid */}
-        <div className="grid grid-cols-2 gap-3">
-          <Card className="rounded-2xl border-stone-200">
-            <CardContent className="p-4">
-              <div className="text-xs text-muted-foreground mb-1">Закроешь через</div>
-              <div className="text-2xl font-bold text-emerald-700">{monthsLeft}</div>
-              <div className="text-xs text-muted-foreground">мес. ({payoffStr})</div>
-            </CardContent>
-          </Card>
-          <Card className="rounded-2xl border-stone-200">
-            <CardContent className="p-4">
-              <div className="text-xs text-muted-foreground mb-1">В месяц</div>
-              <div className="text-2xl font-bold">{formatRub(monthlyPayment)}</div>
-              <div className="text-xs text-muted-foreground">суммарно</div>
-            </CardContent>
-          </Card>
-          <Card className="rounded-2xl border-stone-200">
-            <CardContent className="p-4">
-              <div className="text-xs text-muted-foreground mb-1">Экономия (мес.)</div>
-              <div className="text-2xl font-bold text-emerald-700">~{savedMonths}</div>
-              <div className="text-xs text-muted-foreground">vs. минималка</div>
-            </CardContent>
-          </Card>
-          <Card className="rounded-2xl border-stone-200">
-            <CardContent className="p-4">
-              <div className="text-xs text-muted-foreground mb-1">Выплачено</div>
-              <div className="text-2xl font-bold">{formatRub(paid)}</div>
-              <div className="text-xs text-muted-foreground">из {formatRub(loan.startBalance)}</div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Payment breakdown */}
-        <Card className="rounded-2xl border-stone-200">
-          <CardContent className="p-0">
-            <div className="px-4 py-3 border-b border-stone-100">
-              <div className="text-sm font-semibold mb-0.5">Структура платежей</div>
-              <div className="text-xs text-muted-foreground">Нажми на строку чтобы изменить</div>
-            </div>
-            <button
-              className="w-full flex items-center px-4 py-3.5 border-b border-stone-100 hover:bg-stone-50 transition-colors text-left"
-              onClick={() => open('early', loan.earlyPayment)}
-            >
-              <div className="w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center text-base mr-3">⚡</div>
-              <div className="flex-1">
-                <div className="text-sm font-medium">Досрочный платёж</div>
-                <div className="text-xs text-muted-foreground">С зарплаты 15-го</div>
-              </div>
-              <div className="font-bold text-red-600 text-sm mr-1">−{formatRub(loan.earlyPayment)}</div>
-              <div className="text-stone-300 text-xs">✏</div>
-            </button>
-            <button
-              className="w-full flex items-center px-4 py-3.5 border-b border-stone-100 hover:bg-stone-50 transition-colors text-left"
-              onClick={() => open('mandatory', loan.mandatoryPayment)}
-            >
-              <div className="w-9 h-9 rounded-xl bg-yellow-100 flex items-center justify-center text-base mr-3">🏦</div>
-              <div className="flex-1">
-                <div className="text-sm font-medium">Обязательный платёж</div>
-                <div className="text-xs text-muted-foreground">С аванса 2-го числа</div>
-              </div>
-              <div className="font-bold text-red-600 text-sm mr-1">−{formatRub(loan.mandatoryPayment)}</div>
-              <div className="text-stone-300 text-xs">✏</div>
-            </button>
-            <button
-              className="w-full flex items-center px-4 py-3.5 hover:bg-stone-50 transition-colors text-left"
-              onClick={() => open('start', loan.startBalance)}
-            >
-              <div className="w-9 h-9 rounded-xl bg-stone-100 flex items-center justify-center text-base mr-3">📊</div>
-              <div className="flex-1">
-                <div className="text-sm font-medium">Начальный долг</div>
-                <div className="text-xs text-muted-foreground">Когда начал отслеживать</div>
-              </div>
-              <div className="font-bold text-stone-500 text-sm mr-1">{formatRub(loan.startBalance)}</div>
-              <div className="text-stone-300 text-xs">✏</div>
-            </button>
-          </CardContent>
-        </Card>
-
-        <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4">
-          <div className="text-sm font-semibold text-emerald-800 mb-1">Правильный путь</div>
-          <div className="text-xs text-emerald-700 leading-relaxed">
-            Платишь {formatRub(monthlyPayment)}/мес вместо минималки ~{formatRub(minMonthlyPayment)}/мес.
-            Экономишь примерно <span className="font-semibold">~{savedMonths} месяцев</span> и много денег на процентах.
+          <div className="mt-4 mb-3">
+            <Progress value={progressPct} className="h-2.5 bg-white/10" indicatorClassName="bg-emerald-400" />
           </div>
-        </div>
+          <div className="flex justify-between text-xs text-white/40">
+            <span>Выплачено {formatRub(paid)}</span>
+            <span>{progressPct}%</span>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Stats grid */}
+      <div className="grid grid-cols-2 gap-3">
+        <Card className="rounded-2xl border-stone-200">
+          <CardContent className="p-4">
+            <div className="text-xs text-muted-foreground mb-1">Закроешь через</div>
+            <div className="text-2xl font-bold text-emerald-700">{monthsLeft}</div>
+            <div className="text-xs text-muted-foreground">мес. ({payoffStr})</div>
+          </CardContent>
+        </Card>
+        <Card className="rounded-2xl border-stone-200">
+          <CardContent className="p-4">
+            <div className="text-xs text-muted-foreground mb-1">В месяц</div>
+            <div className="text-2xl font-bold">{formatRub(monthlyPayment)}</div>
+            <div className="text-xs text-muted-foreground">суммарно</div>
+          </CardContent>
+        </Card>
+        <Card className="rounded-2xl border-stone-200">
+          <CardContent className="p-4">
+            <div className="text-xs text-muted-foreground mb-1">Экономия (мес.)</div>
+            <div className="text-2xl font-bold text-emerald-700">~{savedMonths}</div>
+            <div className="text-xs text-muted-foreground">vs. минималка</div>
+          </CardContent>
+        </Card>
+        <Card className="rounded-2xl border-stone-200">
+          <CardContent className="p-4">
+            <div className="text-xs text-muted-foreground mb-1">Выплачено</div>
+            <div className="text-2xl font-bold">{formatRub(paid)}</div>
+            <div className="text-xs text-muted-foreground">из {formatRub(loan.startBalance)}</div>
+          </CardContent>
+        </Card>
       </div>
 
-      <Drawer open={editing !== null} onOpenChange={open => !open && setEditing(null)}>
-        <DrawerContent>
-          <DrawerHeader>
-            <DrawerTitle>
-              {editing === 'balance' && 'Текущий остаток долга'}
-              {editing === 'early' && 'Досрочный платёж'}
-              {editing === 'mandatory' && 'Обязательный платёж'}
-              {editing === 'start' && 'Начальная сумма долга'}
-            </DrawerTitle>
-          </DrawerHeader>
-          <div className="px-4 pb-2">
-            <Label className="mb-1.5 block">Сумма (₽)</Label>
-            <Input
-              type="number"
-              value={val}
-              onChange={e => setVal(e.target.value)}
-              className="text-base h-12"
-              autoFocus
-            />
+      {/* Payment breakdown */}
+      <Card className="rounded-2xl border-stone-200">
+        <CardContent className="p-0">
+          <div className="px-4 py-3 border-b border-stone-100">
+            <div className="text-sm font-semibold mb-0.5">Структура платежей</div>
+            <div className="text-xs text-muted-foreground">Нажми на сумму чтобы изменить</div>
           </div>
-          <DrawerFooter>
-            <Button onClick={save} className="h-12 text-base">Сохранить</Button>
-            <Button variant="outline" onClick={() => setEditing(null)} className="h-12 text-base">Отмена</Button>
-          </DrawerFooter>
-        </DrawerContent>
-      </Drawer>
-    </>
+
+          {[
+            { icon: '⚡', bg: 'bg-amber-100', label: 'Досрочный платёж', sub: 'С зарплаты 15-го', value: loan.earlyPayment, key: 'early' as const },
+            { icon: '🏦', bg: 'bg-yellow-100', label: 'Обязательный платёж', sub: 'С аванса 2-го числа', value: loan.mandatoryPayment, key: 'mandatory' as const },
+            { icon: '📊', bg: 'bg-stone-100', label: 'Начальный долг', sub: 'Когда начал отслеживать', value: loan.startBalance, key: 'start' as const },
+          ].map((row, i, arr) => (
+            <div key={row.key} className={`flex items-center px-4 py-3.5 gap-3 ${i < arr.length - 1 ? 'border-b border-stone-100' : ''}`}>
+              <div className={`w-9 h-9 rounded-xl ${row.bg} flex items-center justify-center text-base shrink-0`}>{row.icon}</div>
+              <div className="flex-1">
+                <div className="text-sm font-medium">{row.label}</div>
+                <div className="text-xs text-muted-foreground">{row.sub}</div>
+              </div>
+              <InlineField
+                value={row.value}
+                onSave={v => onUpdateLoan({ [row.key === 'early' ? 'earlyPayment' : row.key === 'mandatory' ? 'mandatoryPayment' : 'startBalance']: v })}
+                className="flex items-center gap-1 hover:opacity-70 transition-opacity shrink-0"
+              >
+                <span className="font-bold text-sm text-stone-600">{formatRub(row.value)}</span>
+                <span className="text-stone-300 text-xs">✏</span>
+              </InlineField>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
+      <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4">
+        <div className="text-sm font-semibold text-emerald-800 mb-1">Правильный путь</div>
+        <div className="text-xs text-emerald-700 leading-relaxed">
+          Платишь {formatRub(monthlyPayment)}/мес вместо минималки ~{formatRub(minMonthlyPayment)}/мес.
+          Экономишь примерно <span className="font-semibold">~{savedMonths} месяцев</span> и много денег на процентах.
+        </div>
+      </div>
+    </div>
   );
 }
