@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useConfig } from '../hooks/useConfig'
 import { Settings } from '../components/Settings'
+import { SettingsSkeleton } from '../components/skeletons/SettingsSkeleton'
 
 export const Route = createFileRoute('/settings')({
   component: SettingsPage,
@@ -8,7 +9,7 @@ export const Route = createFileRoute('/settings')({
 
 function SettingsPage() {
   const { config, isLoading, updateLoan, updatePeriodIncome, updateEarlyLoan, updateFixedExpense, updateDailyExpense, resetToDefaults } = useConfig()
-  if (isLoading || !config) return null
+  if (isLoading || !config) return <SettingsSkeleton />
   return (
     <Settings
       config={config}
