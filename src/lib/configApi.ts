@@ -2,11 +2,12 @@ import type { FinanceConfig } from '../types';
 import { supabase, CONFIG_ROW_ID } from './supabase';
 import { DEFAULT_CONFIG } from '../defaultConfig';
 
-export async function fetchConfig(): Promise<FinanceConfig> {
+export async function fetchConfig(signal?: AbortSignal): Promise<FinanceConfig> {
   const { data, error } = await supabase
     .from('config')
     .select('data')
     .eq('id', CONFIG_ROW_ID)
+    .abortSignal(signal!)
     .single();
 
   const parsed = data?.data as FinanceConfig | null;

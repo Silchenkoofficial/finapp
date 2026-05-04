@@ -10,7 +10,7 @@ export function useConfig() {
 
   const { data: config, isLoading } = useQuery({
     queryKey: QUERY_KEY,
-    queryFn: fetchConfig,
+    queryFn: ({ signal }) => fetchConfig(signal),
     staleTime: Infinity,
   });
 
