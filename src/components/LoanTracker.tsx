@@ -3,7 +3,7 @@ import type { FinanceConfig } from '../types';
 import { formatRub, loanMonthsLeft } from '../lib/calc';
 import { Card, CardContent } from './ui/card';
 import { Progress } from './ui/progress';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './ui/dialog';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter } from './ui/drawer';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Button } from './ui/button';
@@ -158,32 +158,32 @@ export function LoanTracker({ config, onUpdateLoan }: Props) {
         </div>
       </div>
 
-      <Dialog open={editing !== null} onOpenChange={open => !open && setEditing(null)}>
-        <DialogContent className="rounded-2xl max-w-sm mx-4">
-          <DialogHeader>
-            <DialogTitle>
+      <Drawer open={editing !== null} onOpenChange={open => !open && setEditing(null)}>
+        <DrawerContent>
+          <DrawerHeader>
+            <DrawerTitle>
               {editing === 'balance' && 'Текущий остаток долга'}
               {editing === 'early' && 'Досрочный платёж'}
               {editing === 'mandatory' && 'Обязательный платёж'}
               {editing === 'start' && 'Начальная сумма долга'}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="py-2">
+            </DrawerTitle>
+          </DrawerHeader>
+          <div className="px-4 pb-2">
             <Label className="mb-1.5 block">Сумма (₽)</Label>
             <Input
               type="number"
               value={val}
               onChange={e => setVal(e.target.value)}
-              className="text-base"
+              className="text-base h-12"
               autoFocus
             />
           </div>
-          <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setEditing(null)}>Отмена</Button>
-            <Button onClick={save}>Сохранить</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          <DrawerFooter>
+            <Button onClick={save} className="h-12 text-base">Сохранить</Button>
+            <Button variant="outline" onClick={() => setEditing(null)} className="h-12 text-base">Отмена</Button>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
     </>
   );
 }
