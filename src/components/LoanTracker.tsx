@@ -62,7 +62,7 @@ export function LoanTracker({ config, onUpdateLoan }: Props) {
             <div className="text-sm text-white/50 mb-4">нажми чтобы обновить</div>
 
             <div className="mb-3">
-              <Progress value={progressPct} className="h-2.5 bg-white/10 [&>div]:bg-emerald-400" />
+              <Progress value={progressPct} className="h-2.5 bg-white/10" indicatorClassName="bg-emerald-400" />
             </div>
             <div className="flex justify-between text-xs text-white/40">
               <span>Выплачено {formatRub(paid)}</span>
