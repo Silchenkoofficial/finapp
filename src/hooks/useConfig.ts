@@ -16,12 +16,13 @@ export function useConfig() {
 
   const { mutate, isPending: isSaving } = useMutation({
     mutationFn: saveConfig,
-    onMutate: async (newConfig) => {
-      await queryClient.cancelQueries({ queryKey: QUERY_KEY });
+    onMutate: (newConfig) => {
+      const previous = queryClient.getQueryData<FinanceConfig>(QUERY_KEY);
       queryClient.setQueryData(QUERY_KEY, newConfig);
+      return { previous };
     },
     onError: (_err, _vars, context) => {
-      if (context) queryClient.setQueryData(QUERY_KEY, context);
+      if (context?.previous) queryClient.setQueryData(QUERY_KEY, context.previous);
     },
   });
 
@@ -39,9 +40,11 @@ export function useConfig() {
       periods: c.periods.map(p => p.id === id ? { ...p, income } : p),
     }));
 
-  const updatePeriodEarlyLoan = (amount: number) =>
+  // Обновляет и loan.earlyPayment и period.earlyLoanPayment за один mutate
+  const updateEarlyLoan = (amount: number) =>
     update(c => ({
       ...c,
+      loan: { ...c.loan, earlyPayment: amount },
       periods: c.periods.map(p => p.id === 'salary' ? { ...p, earlyLoanPayment: amount } : p),
     }));
 
@@ -73,7 +76,7 @@ export function useConfig() {
     isSaving,
     updateLoan,
     updatePeriodIncome,
-    updatePeriodEarlyLoan,
+    updateEarlyLoan,
     updateFixedExpense,
     updateDailyExpense,
     resetToDefaults,

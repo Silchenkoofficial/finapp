@@ -35,7 +35,7 @@ function AppInner() {
     isSaving,
     updateLoan,
     updatePeriodIncome,
-    updatePeriodEarlyLoan,
+    updateEarlyLoan,
     updateFixedExpense,
     updateDailyExpense,
     resetToDefaults,
@@ -78,7 +78,7 @@ function AppInner() {
             <PeriodBreakdown
               config={config}
               onUpdateIncome={updatePeriodIncome}
-              onUpdateEarlyLoan={updatePeriodEarlyLoan}
+              onUpdateEarlyLoan={updateEarlyLoan}
               onUpdateFixed={updateFixedExpense}
               onUpdateDaily={updateDailyExpense}
             />
@@ -89,7 +89,7 @@ function AppInner() {
             <Settings
               config={config}
               onUpdateIncome={updatePeriodIncome}
-              onUpdateEarlyLoan={updatePeriodEarlyLoan}
+              onUpdateEarlyLoan={updateEarlyLoan}
               onUpdateFixed={updateFixedExpense}
               onUpdateDaily={updateDailyExpense}
               onUpdateLoan={updateLoan}
