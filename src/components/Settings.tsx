@@ -14,7 +14,6 @@ interface Props {
   onAddPayment: (data: Omit<PaymentItem, 'id'>) => void;
   onEditPayment: (id: string, updates: Partial<Omit<PaymentItem, 'id'>>) => void;
   onDeletePayment: (id: string) => void;
-  onResetToDefaults: () => void;
 }
 
 const PAYMENT_ICONS: IconName[] = [
@@ -255,9 +254,7 @@ function PaymentSection({
 
 // ─── Settings ────────────────────────────────────────────────────────────────
 
-export function Settings({ config, onAddPayment, onEditPayment, onDeletePayment, onResetToDefaults }: Props) {
-  const [confirmReset, setConfirmReset] = useState(false);
-
+export function Settings({ config, onAddPayment, onEditPayment, onDeletePayment }: Props) {
   const salary = config.payments
     .filter(p => p.period === 'salary')
     .sort((a, b) => a.dayOfMonth - b.dayOfMonth);
@@ -288,28 +285,6 @@ export function Settings({ config, onAddPayment, onEditPayment, onDeletePayment,
         onDelete={onDeletePayment}
       />
 
-      <Card className="rounded-2xl border-red-100 border">
-        <CardContent className="p-4">
-          <div className="text-sm font-semibold text-red-700 mb-1">Сброс данных</div>
-          <div className="text-xs text-muted-foreground mb-3">
-            Вернёт все платежи и настройки к начальным значениям. История каршеринга сотрётся.
-          </div>
-          {confirmReset ? (
-            <div className="flex gap-2">
-              <Button variant="destructive" size="sm" onClick={() => { onResetToDefaults(); setConfirmReset(false); }} className="flex-1">
-                Да, сбросить
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => setConfirmReset(false)} className="flex-1">
-                Отмена
-              </Button>
-            </div>
-          ) : (
-            <Button variant="outline" size="sm" onClick={() => setConfirmReset(true)} className="border-red-200 text-red-600 hover:bg-red-50">
-              Сбросить к дефолтным
-            </Button>
-          )}
-        </CardContent>
-      </Card>
     </div>
   );
 }
