@@ -103,6 +103,56 @@ export function useConfig() {
     paymentAmountMut.mutate({ id, amount, loan });
   };
 
+  // ── payment CRUD ─────────────────────────────────────────────────────────────
+
+  const addPaymentMut = useMutation({
+    mutationFn: ({ payment, sortOrder }: { payment: import('../types').PaymentItem; sortOrder: number }) =>
+      api.insertPayment(payment, sortOrder),
+    onMutate: ({ payment }) =>
+      onMutate(c => ({ ...c, payments: [...c.payments, payment] })),
+    onError,
+  });
+
+  const addPayment = (data: Omit<import('../types').PaymentItem, 'id'>) => {
+    if (!config) return;
+    addPaymentMut.mutate({
+      payment: { ...data, id: crypto.randomUUID() },
+      sortOrder: config.payments.length,
+    });
+  };
+
+  const editPaymentMut = useMutation({
+    mutationFn: ({ id, updates }: { id: string; updates: Partial<Omit<import('../types').PaymentItem, 'id'>> }) =>
+      api.updatePaymentFields(id, updates),
+    onMutate: ({ id, updates }) =>
+      onMutate(c => ({
+        ...c,
+        payments: c.payments.map(p => p.id === id ? { ...p, ...updates } : p),
+      })),
+    onError,
+  });
+
+  const editPayment = (id: string, updates: Partial<Omit<import('../types').PaymentItem, 'id'>>) =>
+    editPaymentMut.mutate({ id, updates });
+
+  const deletePaymentMut = useMutation({
+    mutationFn: (id: string) => api.deletePaymentById(id),
+    onMutate: (id) =>
+      onMutate(c => ({
+        ...c,
+        payments: c.payments.filter(p => p.id !== id),
+        paymentChecks: Object.fromEntries(
+          Object.entries(c.paymentChecks).map(([mk, checks]) => [
+            mk,
+            Object.fromEntries(Object.entries(checks).filter(([pid]) => pid !== id)),
+          ])
+        ),
+      })),
+    onError,
+  });
+
+  const deletePayment = (id: string) => deletePaymentMut.mutate(id);
+
   // ── payment checks ────────────────────────────────────────────────────────────
 
   const checkMut = useMutation({
@@ -203,6 +253,9 @@ export function useConfig() {
     isSaving,
     updateLoan,
     updatePaymentAmount,
+    addPayment,
+    editPayment,
+    deletePayment,
     togglePaymentCheck,
     addCarsharingTrip,
     deleteCarsharingTrip,

@@ -7,12 +7,15 @@ export const Route = createFileRoute('/settings')({
 })
 
 function SettingsPage() {
-  const { config, isLoading, updatePaymentAmount, resetToDefaults } = useConfig()
+  const { config, isLoading, addPayment, editPayment, deletePayment, updatePaymentAmount, resetToDefaults } = useConfig()
   if (isLoading || !config) return null
   return (
     <Settings
       config={config}
       onUpdatePaymentAmount={updatePaymentAmount}
+      onAddPayment={addPayment}
+      onEditPayment={editPayment}
+      onDeletePayment={deletePayment}
       onResetToDefaults={resetToDefaults}
     />
   )

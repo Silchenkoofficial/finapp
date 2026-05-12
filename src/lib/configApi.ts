@@ -124,14 +124,43 @@ export async function saveLoan(loan: LoanState): Promise<void> {
 
 // ─── payments ─────────────────────────────────────────────────────────────────
 
-export async function savePaymentAmount(
+export async function savePaymentAmount(id: string, amount: number): Promise<void> {
+  const { error } = await supabase.from("payments").update({ amount }).eq("id", id);
+  if (error) throw error;
+}
+
+export async function insertPayment(payment: import("../types").PaymentItem, sortOrder: number): Promise<void> {
+  const { error } = await supabase.from("payments").insert({
+    id: payment.id,
+    name: payment.name,
+    icon: payment.icon,
+    amount: payment.amount,
+    period: payment.period,
+    day_of_month: payment.dayOfMonth,
+    description: payment.description ?? null,
+    sort_order: sortOrder,
+  });
+  if (error) throw error;
+}
+
+export async function updatePaymentFields(
   id: string,
-  amount: number,
+  updates: Partial<Omit<import("../types").PaymentItem, "id">>,
 ): Promise<void> {
-  const { error } = await supabase
-    .from("payments")
-    .update({ amount })
-    .eq("id", id);
+  const db: Record<string, unknown> = {};
+  if (updates.name !== undefined) db.name = updates.name;
+  if (updates.icon !== undefined) db.icon = updates.icon;
+  if (updates.amount !== undefined) db.amount = updates.amount;
+  if (updates.period !== undefined) db.period = updates.period;
+  if (updates.dayOfMonth !== undefined) db.day_of_month = updates.dayOfMonth;
+  if ("description" in updates) db.description = updates.description ?? null;
+  const { error } = await supabase.from("payments").update(db).eq("id", id);
+  if (error) throw error;
+}
+
+export async function deletePaymentById(id: string): Promise<void> {
+  await supabase.from("payment_checks").delete().eq("payment_id", id);
+  const { error } = await supabase.from("payments").delete().eq("id", id);
   if (error) throw error;
 }
 
