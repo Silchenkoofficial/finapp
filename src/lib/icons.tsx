@@ -1,6 +1,6 @@
 import {
   Bot, Smartphone, Plug, Car, Star, Globe, Home, Landmark, Zap,
-  CalendarCheck, BarChart3, Settings, type LucideProps,
+  CalendarCheck, BarChart3, Settings, LayoutDashboard, type LucideProps,
 } from 'lucide-react';
 
 export const ICON_MAP = {
@@ -16,6 +16,7 @@ export const ICON_MAP = {
   'calendar-check': CalendarCheck,
   'bar-chart': BarChart3,
   settings: Settings,
+  'layout-dashboard': LayoutDashboard,
 } as const;
 
 export type IconName = keyof typeof ICON_MAP;

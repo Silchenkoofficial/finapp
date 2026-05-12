@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as PaymentsRouteImport } from './routes/payments'
+import { Route as LoanRouteImport } from './routes/loan'
 import { Route as CarsharingRouteImport } from './routes/carsharing'
 import { Route as IndexRouteImport } from './routes/index'
 
@@ -22,6 +23,11 @@ const SettingsRoute = SettingsRouteImport.update({
 const PaymentsRoute = PaymentsRouteImport.update({
   id: '/payments',
   path: '/payments',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoanRoute = LoanRouteImport.update({
+  id: '/loan',
+  path: '/loan',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CarsharingRoute = CarsharingRouteImport.update({
@@ -38,12 +44,14 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/carsharing': typeof CarsharingRoute
+  '/loan': typeof LoanRoute
   '/payments': typeof PaymentsRoute
   '/settings': typeof SettingsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/carsharing': typeof CarsharingRoute
+  '/loan': typeof LoanRoute
   '/payments': typeof PaymentsRoute
   '/settings': typeof SettingsRoute
 }
@@ -51,20 +59,22 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/carsharing': typeof CarsharingRoute
+  '/loan': typeof LoanRoute
   '/payments': typeof PaymentsRoute
   '/settings': typeof SettingsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/carsharing' | '/payments' | '/settings'
+  fullPaths: '/' | '/carsharing' | '/loan' | '/payments' | '/settings'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/carsharing' | '/payments' | '/settings'
-  id: '__root__' | '/' | '/carsharing' | '/payments' | '/settings'
+  to: '/' | '/carsharing' | '/loan' | '/payments' | '/settings'
+  id: '__root__' | '/' | '/carsharing' | '/loan' | '/payments' | '/settings'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CarsharingRoute: typeof CarsharingRoute
+  LoanRoute: typeof LoanRoute
   PaymentsRoute: typeof PaymentsRoute
   SettingsRoute: typeof SettingsRoute
 }
@@ -83,6 +93,13 @@ declare module '@tanstack/react-router' {
       path: '/payments'
       fullPath: '/payments'
       preLoaderRoute: typeof PaymentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/loan': {
+      id: '/loan'
+      path: '/loan'
+      fullPath: '/loan'
+      preLoaderRoute: typeof LoanRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/carsharing': {
@@ -105,6 +122,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CarsharingRoute: CarsharingRoute,
+  LoanRoute: LoanRoute,
   PaymentsRoute: PaymentsRoute,
   SettingsRoute: SettingsRoute,
 }
