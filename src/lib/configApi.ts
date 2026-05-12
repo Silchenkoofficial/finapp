@@ -10,8 +10,11 @@ export async function fetchConfig(signal?: AbortSignal): Promise<FinanceConfig> 
     .abortSignal(signal!)
     .single();
 
+  // Если запрос был отменён (StrictMode / смена роута) — не трогать данные
+  if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
+
   const parsed = data?.data as FinanceConfig | null;
-  if (error || !parsed?.periods?.length) {
+  if (error || !Array.isArray(parsed?.payments)) {
     await saveConfig(DEFAULT_CONFIG);
     return DEFAULT_CONFIG;
   }

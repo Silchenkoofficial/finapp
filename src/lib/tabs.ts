@@ -1,15 +1,15 @@
-export const TABS = [
-  { path: '/', label: 'Обзор', icon: '📊' },
-  { path: '/periods', label: 'Периоды', icon: '💸' },
-  { path: '/loan', label: 'Кредит', icon: '🏦' },
-  { path: '/pots', label: 'Копилки', icon: '💰' },
-  { path: '/settings', label: 'Настройки', icon: '⚙️' },
-] as const
+import type { IconName } from './icons';
+
+export const TABS: { path: string; label: string; icon: IconName }[] = [
+  { path: '/',            label: 'Кредит',     icon: 'landmark'       },
+  { path: '/payments',   label: 'Платежи',     icon: 'calendar-check' },
+  { path: '/carsharing', label: 'Каршеринг',   icon: 'car'            },
+  { path: '/settings',   label: 'Настройки',   icon: 'settings'       },
+];
 
 export const TAB_TITLES: Record<string, string> = {
-  '/': 'Обзор',
-  '/periods': 'Разбивка по периодам',
-  '/loan': 'Кредитный трекер',
-  '/pots': 'Накопительные копилки',
-  '/settings': 'Настройки',
-}
+  '/':            'Кредит',
+  '/payments':    'Платежи',
+  '/carsharing':  'Каршеринг',
+  '/settings':    'Настройки',
+};

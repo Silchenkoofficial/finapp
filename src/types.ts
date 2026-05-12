@@ -1,38 +1,30 @@
-export interface FixedExpense {
+export interface PaymentItem {
   id: string;
   name: string;
   icon: string;
   amount: number;
+  period: 'salary' | 'advance';
   dayOfMonth: number;
   description?: string;
 }
 
-export interface DailyExpense {
+// {"2026-05": {"payment-id": true}}
+export type PaymentChecks = Record<string, Record<string, boolean>>;
+
+export type CarsharingService = 'yandex' | 'citydrive';
+
+export interface CarsharingTag {
   id: string;
   name: string;
-  icon: string;
-  dailyRate: number;
-  days: number;
 }
 
-export interface Period {
-  id: 'salary' | 'advance';
-  label: string;
-  dayOfMonth: number;
-  income: number;
-  earlyLoanPayment: number;
-  fixedExpenses: FixedExpense[];
-  dailyExpenses: DailyExpense[];
-}
-
-export interface SavingsPot {
+export interface CarsharingTrip {
   id: string;
-  name: string;
-  icon: string;
+  date: string; // YYYY-MM-DD
   amount: number;
-  debitDay: number;
-  refillDay: number;
-  refillNote: string;
+  service: CarsharingService;
+  tagIds: string[];
+  comment?: string;
 }
 
 export interface LoanState {
@@ -44,7 +36,9 @@ export interface LoanState {
 }
 
 export interface FinanceConfig {
-  periods: Period[];
-  savingsPots: SavingsPot[];
   loan: LoanState;
+  payments: PaymentItem[];
+  paymentChecks: PaymentChecks;
+  carsharingTags: CarsharingTag[];
+  carsharingTrips: CarsharingTrip[];
 }

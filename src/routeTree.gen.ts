@@ -10,9 +10,8 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SettingsRouteImport } from './routes/settings'
-import { Route as PotsRouteImport } from './routes/pots'
-import { Route as PeriodsRouteImport } from './routes/periods'
-import { Route as LoanRouteImport } from './routes/loan'
+import { Route as PaymentsRouteImport } from './routes/payments'
+import { Route as CarsharingRouteImport } from './routes/carsharing'
 import { Route as IndexRouteImport } from './routes/index'
 
 const SettingsRoute = SettingsRouteImport.update({
@@ -20,19 +19,14 @@ const SettingsRoute = SettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PotsRoute = PotsRouteImport.update({
-  id: '/pots',
-  path: '/pots',
+const PaymentsRoute = PaymentsRouteImport.update({
+  id: '/payments',
+  path: '/payments',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PeriodsRoute = PeriodsRouteImport.update({
-  id: '/periods',
-  path: '/periods',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoanRoute = LoanRouteImport.update({
-  id: '/loan',
-  path: '/loan',
+const CarsharingRoute = CarsharingRouteImport.update({
+  id: '/carsharing',
+  path: '/carsharing',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -43,39 +37,35 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/loan': typeof LoanRoute
-  '/periods': typeof PeriodsRoute
-  '/pots': typeof PotsRoute
+  '/carsharing': typeof CarsharingRoute
+  '/payments': typeof PaymentsRoute
   '/settings': typeof SettingsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/loan': typeof LoanRoute
-  '/periods': typeof PeriodsRoute
-  '/pots': typeof PotsRoute
+  '/carsharing': typeof CarsharingRoute
+  '/payments': typeof PaymentsRoute
   '/settings': typeof SettingsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/loan': typeof LoanRoute
-  '/periods': typeof PeriodsRoute
-  '/pots': typeof PotsRoute
+  '/carsharing': typeof CarsharingRoute
+  '/payments': typeof PaymentsRoute
   '/settings': typeof SettingsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/loan' | '/periods' | '/pots' | '/settings'
+  fullPaths: '/' | '/carsharing' | '/payments' | '/settings'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/loan' | '/periods' | '/pots' | '/settings'
-  id: '__root__' | '/' | '/loan' | '/periods' | '/pots' | '/settings'
+  to: '/' | '/carsharing' | '/payments' | '/settings'
+  id: '__root__' | '/' | '/carsharing' | '/payments' | '/settings'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  LoanRoute: typeof LoanRoute
-  PeriodsRoute: typeof PeriodsRoute
-  PotsRoute: typeof PotsRoute
+  CarsharingRoute: typeof CarsharingRoute
+  PaymentsRoute: typeof PaymentsRoute
   SettingsRoute: typeof SettingsRoute
 }
 
@@ -88,25 +78,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/pots': {
-      id: '/pots'
-      path: '/pots'
-      fullPath: '/pots'
-      preLoaderRoute: typeof PotsRouteImport
+    '/payments': {
+      id: '/payments'
+      path: '/payments'
+      fullPath: '/payments'
+      preLoaderRoute: typeof PaymentsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/periods': {
-      id: '/periods'
-      path: '/periods'
-      fullPath: '/periods'
-      preLoaderRoute: typeof PeriodsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/loan': {
-      id: '/loan'
-      path: '/loan'
-      fullPath: '/loan'
-      preLoaderRoute: typeof LoanRouteImport
+    '/carsharing': {
+      id: '/carsharing'
+      path: '/carsharing'
+      fullPath: '/carsharing'
+      preLoaderRoute: typeof CarsharingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -121,9 +104,8 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  LoanRoute: LoanRoute,
-  PeriodsRoute: PeriodsRoute,
-  PotsRoute: PotsRoute,
+  CarsharingRoute: CarsharingRoute,
+  PaymentsRoute: PaymentsRoute,
   SettingsRoute: SettingsRoute,
 }
 export const routeTree = rootRouteImport

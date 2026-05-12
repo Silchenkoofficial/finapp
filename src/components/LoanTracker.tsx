@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Zap, Landmark, BarChart3 } from 'lucide-react';
 import type { FinanceConfig } from '../types';
 import { formatRub, loanMonthsLeft } from '../lib/calc';
 import { Card, CardContent } from './ui/card';
@@ -76,7 +77,6 @@ export function LoanTracker({ config, onUpdateLoan }: Props) {
 
   return (
     <div className="space-y-4">
-      {/* Main progress card */}
       <Card className="rounded-2xl border-0 bg-[#111827] text-white overflow-hidden">
         <CardContent className="p-5">
           <div className="text-[10px] tracking-widest text-white/30 uppercase mb-1">Остаток долга</div>
@@ -101,7 +101,6 @@ export function LoanTracker({ config, onUpdateLoan }: Props) {
         </CardContent>
       </Card>
 
-      {/* Stats grid */}
       <div className="grid grid-cols-2 gap-3">
         <Card className="rounded-2xl border-stone-200">
           <CardContent className="p-4">
@@ -133,7 +132,6 @@ export function LoanTracker({ config, onUpdateLoan }: Props) {
         </Card>
       </div>
 
-      {/* Payment breakdown */}
       <Card className="rounded-2xl border-stone-200">
         <CardContent className="p-0">
           <div className="px-4 py-3 border-b border-stone-100">
@@ -142,19 +140,21 @@ export function LoanTracker({ config, onUpdateLoan }: Props) {
           </div>
 
           {[
-            { icon: '⚡', bg: 'bg-amber-100', label: 'Досрочный платёж', sub: 'С зарплаты 15-го', value: loan.earlyPayment, key: 'early' as const },
-            { icon: '🏦', bg: 'bg-yellow-100', label: 'Обязательный платёж', sub: 'С аванса 2-го числа', value: loan.mandatoryPayment, key: 'mandatory' as const },
-            { icon: '📊', bg: 'bg-stone-100', label: 'Начальный долг', sub: 'Когда начал отслеживать', value: loan.startBalance, key: 'start' as const },
+            { Icon: Zap,      bg: 'bg-amber-100',  label: 'Досрочный платёж',  sub: 'С зарплаты 15-го',       value: loan.earlyPayment,    key: 'earlyPayment'    as const },
+            { Icon: Landmark, bg: 'bg-yellow-100', label: 'Обязательный платёж', sub: 'С аванса 2-го числа',   value: loan.mandatoryPayment, key: 'mandatoryPayment' as const },
+            { Icon: BarChart3, bg: 'bg-stone-100', label: 'Начальный долг',     sub: 'Когда начал отслеживать', value: loan.startBalance,    key: 'startBalance'    as const },
           ].map((row, i, arr) => (
             <div key={row.key} className={`flex items-center px-4 py-3.5 gap-3 ${i < arr.length - 1 ? 'border-b border-stone-100' : ''}`}>
-              <div className={`w-9 h-9 rounded-xl ${row.bg} flex items-center justify-center text-base shrink-0`}>{row.icon}</div>
+              <div className={`w-9 h-9 rounded-xl ${row.bg} flex items-center justify-center shrink-0`}>
+                <row.Icon size={18} className="text-stone-600" />
+              </div>
               <div className="flex-1">
                 <div className="text-sm font-medium">{row.label}</div>
                 <div className="text-xs text-muted-foreground">{row.sub}</div>
               </div>
               <InlineField
                 value={row.value}
-                onSave={v => onUpdateLoan({ [row.key === 'early' ? 'earlyPayment' : row.key === 'mandatory' ? 'mandatoryPayment' : 'startBalance']: v })}
+                onSave={v => onUpdateLoan({ [row.key]: v })}
                 className="flex items-center gap-1 hover:opacity-70 transition-opacity shrink-0"
               >
                 <span className="font-bold text-sm text-stone-600">{formatRub(row.value)}</span>

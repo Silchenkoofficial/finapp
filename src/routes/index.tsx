@@ -1,14 +1,14 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useConfig } from '../hooks/useConfig'
-import { Overview } from '../components/Overview'
-import { OverviewSkeleton } from '../components/skeletons/OverviewSkeleton'
+import { LoanTracker } from '../components/LoanTracker'
+import { LoanSkeleton } from '../components/skeletons/LoanSkeleton'
 
 export const Route = createFileRoute('/')({
-  component: IndexPage,
+  component: LoanPage,
 })
 
-function IndexPage() {
-  const { config, isLoading } = useConfig()
-  if (isLoading || !config) return <OverviewSkeleton />
-  return <Overview config={config} />
+function LoanPage() {
+  const { config, isLoading, updateLoan } = useConfig()
+  if (isLoading || !config) return <LoanSkeleton />
+  return <LoanTracker config={config} onUpdateLoan={updateLoan} />
 }
