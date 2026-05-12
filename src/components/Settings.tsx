@@ -26,7 +26,7 @@ function EditablePayment({
   const start = () => { setDraft(String(payment.amount)); setEditing(true); };
   const save = () => {
     const n = Number(draft);
-    if (!isNaN(n) && n > 0) onSave(n);
+    if (!isNaN(n) && n >= 0) onSave(n);
     setEditing(false);
   };
 
