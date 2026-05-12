@@ -1,13 +1,23 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import type { FinanceConfig, CarsharingTrip } from '../types';
-import { fetchConfig, saveConfig } from '../lib/configApi';
-import { DEFAULT_CONFIG } from '../defaultConfig';
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  useIsMutating,
+} from "@tanstack/react-query";
+import type {
+  FinanceConfig,
+  LoanState,
+  CarsharingTrip,
+  CarsharingTag,
+} from "../types";
+import * as api from "../lib/configApi";
+import { DEFAULT_CONFIG } from "../defaultConfig";
 
-const QUERY_KEY = ['config'];
+const QUERY_KEY = ["config"];
 
 function monthKey() {
   const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 }
 
 export function useConfig() {
@@ -15,78 +25,177 @@ export function useConfig() {
 
   const { data: config, isLoading } = useQuery({
     queryKey: QUERY_KEY,
-    queryFn: ({ signal }) => fetchConfig(signal),
+    queryFn: ({ signal }) => api.fetchConfig(signal),
     staleTime: Infinity,
   });
 
-  const { mutate, isPending: isSaving } = useMutation({
-    mutationFn: saveConfig,
-    onMutate: (newConfig) => {
-      const previous = queryClient.getQueryData<FinanceConfig>(QUERY_KEY);
-      queryClient.setQueryData(QUERY_KEY, newConfig);
-      return { previous };
-    },
-    onError: (_err, _vars, context) => {
-      if (context?.previous) queryClient.setQueryData(QUERY_KEY, context.previous);
-    },
-  });
+  const isSaving = useIsMutating() > 0;
 
-  function update(updater: (prev: FinanceConfig) => FinanceConfig) {
-    if (!config) return;
-    mutate(updater(config));
+  // ── helpers ──────────────────────────────────────────────────────────────────
+
+  function getCache() {
+    return queryClient.getQueryData<FinanceConfig>(QUERY_KEY);
   }
 
-  const updateLoan = (updates: Partial<FinanceConfig['loan']>) =>
-    update(c => ({ ...c, loan: { ...c.loan, ...updates } }));
+  function setCache(next: FinanceConfig) {
+    queryClient.setQueryData(QUERY_KEY, next);
+  }
 
-  const togglePaymentCheck = (paymentId: string) =>
-    update(c => {
-      const key = monthKey();
-      const month = c.paymentChecks[key] ?? {};
-      return {
+  function onMutate(updater: (prev: FinanceConfig) => FinanceConfig) {
+    const previous = getCache();
+    if (previous) setCache(updater(previous));
+    return { previous };
+  }
+
+  function onError(
+    _: unknown,
+    __: unknown,
+    ctx: { previous?: FinanceConfig } | undefined,
+  ) {
+    if (ctx?.previous) setCache(ctx.previous);
+  }
+
+  // ── loan ─────────────────────────────────────────────────────────────────────
+
+  const loanMut = useMutation({
+    mutationFn: (loan: LoanState) => api.saveLoan(loan),
+    onMutate: (loan) => onMutate((c) => ({ ...c, loan })),
+    onError,
+  });
+
+  const updateLoan = (updates: Partial<LoanState>) => {
+    if (!config) return;
+    loanMut.mutate({ ...config.loan, ...updates });
+  };
+
+  // ── payment amount ────────────────────────────────────────────────────────────
+
+  const paymentAmountMut = useMutation({
+    mutationFn: async ({
+      id,
+      amount,
+      loan,
+    }: {
+      id: string;
+      amount: number;
+      loan: LoanState;
+    }) => {
+      await api.savePaymentAmount(id, amount);
+      if (id === "loan-early" || id === "loan-mandatory")
+        await api.saveLoan(loan);
+    },
+    onMutate: ({ id, amount, loan }) =>
+      onMutate((c) => ({
+        ...c,
+        payments: c.payments.map((p) => (p.id === id ? { ...p, amount } : p)),
+        loan,
+      })),
+    onError,
+  });
+
+  const updatePaymentAmount = (id: string, amount: number) => {
+    if (!config) return;
+    const loan = {
+      ...config.loan,
+      ...(id === "loan-early" ? { earlyPayment: amount } : {}),
+      ...(id === "loan-mandatory" ? { mandatoryPayment: amount } : {}),
+    };
+    paymentAmountMut.mutate({ id, amount, loan });
+  };
+
+  // ── payment checks ────────────────────────────────────────────────────────────
+
+  const checkMut = useMutation({
+    mutationFn: ({
+      mk,
+      paymentId,
+      checked,
+    }: {
+      mk: string;
+      paymentId: string;
+      checked: boolean;
+    }) => api.upsertPaymentCheck(mk, paymentId, checked),
+    onMutate: ({ mk, paymentId, checked }) =>
+      onMutate((c) => ({
         ...c,
         paymentChecks: {
           ...c.paymentChecks,
-          [key]: { ...month, [paymentId]: !month[paymentId] },
+          [mk]: { ...(c.paymentChecks[mk] ?? {}), [paymentId]: checked },
         },
-      };
-    });
+      })),
+    onError,
+  });
 
-  const addCarsharingTrip = (trip: Omit<CarsharingTrip, 'id'>) =>
-    update(c => ({
-      ...c,
-      carsharingTrips: [{ ...trip, id: crypto.randomUUID() }, ...c.carsharingTrips],
-    }));
+  const togglePaymentCheck = (paymentId: string) => {
+    if (!config) return;
+    const mk = monthKey();
+    const checked = !(config.paymentChecks[mk]?.[paymentId] ?? false);
+    checkMut.mutate({ mk, paymentId, checked });
+  };
 
-  const deleteCarsharingTrip = (tripId: string) =>
-    update(c => ({ ...c, carsharingTrips: c.carsharingTrips.filter(t => t.id !== tripId) }));
+  // ── carsharing trips ──────────────────────────────────────────────────────────
+
+  const addTripMut = useMutation({
+    mutationFn: (trip: CarsharingTrip) => api.insertTrip(trip),
+    onMutate: (trip) =>
+      onMutate((c) => ({
+        ...c,
+        carsharingTrips: [trip, ...c.carsharingTrips],
+      })),
+    onError,
+  });
+
+  const addCarsharingTrip = (trip: Omit<CarsharingTrip, "id">) =>
+    addTripMut.mutate({ ...trip, id: crypto.randomUUID() });
+
+  const deleteTripMut = useMutation({
+    mutationFn: (id: string) => api.deleteTrip(id),
+    onMutate: (id) =>
+      onMutate((c) => ({
+        ...c,
+        carsharingTrips: c.carsharingTrips.filter((t) => t.id !== id),
+      })),
+    onError,
+  });
+
+  const deleteCarsharingTrip = (id: string) => deleteTripMut.mutate(id);
+
+  // ── carsharing tags ───────────────────────────────────────────────────────────
+
+  const addTagMut = useMutation({
+    mutationFn: (tag: CarsharingTag) => api.insertTag(tag),
+    onMutate: (tag) =>
+      onMutate((c) => ({ ...c, carsharingTags: [...c.carsharingTags, tag] })),
+    onError,
+  });
 
   const addCarsharingTag = (name: string) =>
-    update(c => ({
-      ...c,
-      carsharingTags: [...c.carsharingTags, { id: crypto.randomUUID(), name }],
-    }));
+    addTagMut.mutate({ id: crypto.randomUUID(), name });
 
-  const updatePaymentAmount = (id: string, amount: number) =>
-    update(c => {
-      const payments = c.payments.map(p => p.id === id ? { ...p, amount } : p);
-      const loan = { ...c.loan };
-      if (id === 'loan-early') loan.earlyPayment = amount;
-      if (id === 'loan-mandatory') loan.mandatoryPayment = amount;
-      return { ...c, payments, loan };
-    });
-
-  const deleteCarsharingTag = (tagId: string) =>
-    update(c => ({
-      ...c,
-      carsharingTags: c.carsharingTags.filter(t => t.id !== tagId),
-      carsharingTrips: c.carsharingTrips.map(trip => ({
-        ...trip,
-        tagIds: trip.tagIds.filter(id => id !== tagId),
+  const deleteTagMut = useMutation({
+    mutationFn: (id: string) => api.deleteTag(id),
+    onMutate: (id) =>
+      onMutate((c) => ({
+        ...c,
+        carsharingTags: c.carsharingTags.filter((t) => t.id !== id),
+        carsharingTrips: c.carsharingTrips.map((t) => ({
+          ...t,
+          tagIds: t.tagIds.filter((tid) => tid !== id),
+        })),
       })),
-    }));
+    onError,
+  });
 
-  const resetToDefaults = () => mutate(DEFAULT_CONFIG);
+  const deleteCarsharingTag = (id: string) => deleteTagMut.mutate(id);
+
+  // ── reset ─────────────────────────────────────────────────────────────────────
+
+  const resetMut = useMutation({
+    mutationFn: api.resetAllToDefaults,
+    onSuccess: () => setCache(DEFAULT_CONFIG),
+  });
+
+  const resetToDefaults = () => resetMut.mutate();
 
   return {
     config,
