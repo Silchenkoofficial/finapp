@@ -1,59 +1,70 @@
-import { useEffect, useState } from 'react'
-import { Outlet, useNavigate, useRouterState } from '@tanstack/react-router'
-import { QueryClientProvider } from '@tanstack/react-query'
-import { Menu, X } from 'lucide-react'
-import { queryClient } from '../lib/queryClient'
-import { useConfig } from '../hooks/useConfig'
-import { TABS, TAB_TITLES } from '../lib/tabs'
-import { Icon } from '../lib/icons'
+import { useEffect, useState } from "react";
+import { Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { Menu, X } from "lucide-react";
+import { queryClient } from "../lib/queryClient";
+import { useConfig } from "../hooks/useConfig";
+import { TABS, TAB_TITLES } from "../lib/tabs";
+import { Icon } from "../lib/icons";
 
 function SideMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const navigate = useNavigate()
-  const pathname = useRouterState({ select: s => s.location.pathname })
+  const navigate = useNavigate();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   useEffect(() => {
-    document.body.style.overflow = open ? 'hidden' : ''
-    return () => { document.body.style.overflow = '' }
-  }, [open])
+    document.body.style.overflow = open ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [open]);
 
   const go = (path: string) => {
-    navigate({ to: path })
-    onClose()
-  }
+    navigate({ to: path });
+    onClose();
+  };
 
   return (
-    <div className={`fixed inset-0 z-50 transition-all duration-300 ${open ? 'visible' : 'invisible'}`}>
+    <div
+      className={`fixed inset-0 z-50 transition-all duration-300 ${open ? "visible" : "invisible"}`}
+    >
       {/* Backdrop */}
       <div
-        className={`absolute inset-0 bg-black/50 transition-opacity duration-300 ${open ? 'opacity-100' : 'opacity-0'}`}
+        className={`absolute inset-0 bg-black/50 transition-opacity duration-300 ${open ? "opacity-100" : "opacity-0"}`}
         onClick={onClose}
       />
 
       {/* Panel */}
-      <div className={`absolute top-0 left-0 h-full w-72 bg-white shadow-2xl flex flex-col transition-transform duration-300 ${open ? 'translate-x-0' : '-translate-x-full'}`}>
+      <div
+        className={`absolute top-0 left-0 h-full w-72 bg-white shadow-2xl flex flex-col transition-transform duration-300 ${open ? "translate-x-0" : "-translate-x-full"}`}
+      >
         {/* Header */}
         <div className="bg-[#111827] text-white px-5 py-5 flex items-center justify-between">
           <div>
-            <div className="text-[10px] tracking-widest text-white/30 uppercase mb-0.5">ФИНАНСЫ</div>
+            <div className="text-[10px] tracking-widest text-white/30 uppercase mb-0.5">
+              ФИНАНСЫ
+            </div>
             <div className="text-base font-bold">Меню</div>
           </div>
-          <button onClick={onClose} className="text-white/50 hover:text-white transition-colors">
+          <button
+            onClick={onClose}
+            className="text-white/50 hover:text-white transition-colors"
+          >
             <X size={20} />
           </button>
         </div>
 
         {/* Nav items */}
         <nav className="flex-1 py-3">
-          {TABS.map(t => {
-            const active = pathname === t.path
+          {TABS.map((t) => {
+            const active = pathname === t.path;
             return (
               <button
                 key={t.path}
                 onClick={() => go(t.path)}
                 className={`w-full flex items-center gap-3.5 px-5 py-3.5 text-left transition-colors ${
                   active
-                    ? 'bg-stone-100 text-[#111827] font-semibold'
-                    : 'text-stone-500 hover:bg-stone-50 hover:text-stone-800'
+                    ? "bg-stone-100 text-[#111827] font-semibold"
+                    : "text-stone-500 hover:bg-stone-50 hover:text-stone-800"
                 }`}
               >
                 {active && (
@@ -62,20 +73,20 @@ function SideMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
                 <Icon name={t.icon} size={18} />
                 <span className="text-sm">{t.label}</span>
               </button>
-            )
+            );
           })}
         </nav>
       </div>
     </div>
-  )
+  );
 }
 
 function Header({ onMenuOpen }: { onMenuOpen: () => void }) {
-  const pathname = useRouterState({ select: s => s.location.pathname })
-  const { isSaving } = useConfig()
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { isSaving } = useConfig();
 
   return (
-    <header className="bg-[#111827] text-white px-5">
+    <header className="bg-[#111827] text-white px-5 sticky top-0 z-10">
       <div className="max-w-lg mx-auto py-4 flex items-center gap-3">
         <button
           onClick={onMenuOpen}
@@ -85,7 +96,7 @@ function Header({ onMenuOpen }: { onMenuOpen: () => void }) {
         </button>
         <div className="flex-1">
           <div className="text-lg font-bold leading-tight">
-            {TAB_TITLES[pathname] ?? 'Финансы'}
+            {TAB_TITLES[pathname] ?? "Финансы"}
           </div>
         </div>
         {isSaving && (
@@ -96,14 +107,14 @@ function Header({ onMenuOpen }: { onMenuOpen: () => void }) {
         )}
       </div>
     </header>
-  )
+  );
 }
 
 function Layout() {
-  const [menuOpen, setMenuOpen] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-stone-100 flex flex-col">
+    <div className="relative min-h-screen bg-stone-100 flex flex-col">
       <Header onMenuOpen={() => setMenuOpen(true)} />
       <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
       <main className="flex-1 overflow-y-auto">
@@ -112,7 +123,7 @@ function Layout() {
         </div>
       </main>
     </div>
-  )
+  );
 }
 
 export function RootLayout() {
@@ -120,5 +131,5 @@ export function RootLayout() {
     <QueryClientProvider client={queryClient}>
       <Layout />
     </QueryClientProvider>
-  )
+  );
 }
