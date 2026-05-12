@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Zap, Landmark, BarChart3 } from 'lucide-react';
+import { Zap, Landmark, BarChart3, CalendarCheck2 } from 'lucide-react';
 import type { FinanceConfig } from '../types';
 import { formatRub, loanMonthsLeft } from '../lib/calc';
 import { Card, CardContent } from './ui/card';
@@ -72,12 +72,10 @@ export function LoanTracker({ config, onUpdateLoan, onUpdatePaymentAmount }: Pro
   payoffDate.setMonth(payoffDate.getMonth() + monthsLeft);
   const payoffStr = payoffDate.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' });
 
-  const minMonthlyPayment = loan.currentBalance * 0.01;
-  const minMonthsLeft = loanMonthsLeft(loan.currentBalance, minMonthlyPayment);
-  const savedMonths = Math.max(0, minMonthsLeft - monthsLeft);
-
   return (
     <div className="space-y-4">
+
+      {/* Остаток и прогресс */}
       <Card className="rounded-2xl border-0 bg-[#111827] text-white overflow-hidden">
         <CardContent className="p-5">
           <div className="text-[10px] tracking-widest text-white/30 uppercase mb-1">Остаток долга</div>
@@ -89,65 +87,67 @@ export function LoanTracker({ config, onUpdateLoan, onUpdatePaymentAmount }: Pro
             <div className="text-3xl font-bold text-white hover:opacity-70 transition-opacity mb-1">
               {formatRub(loan.currentBalance)}
             </div>
-            <div className="text-sm text-white/50">нажми чтобы обновить</div>
+            <div className="text-xs text-white/40">нажми чтобы обновить остаток</div>
           </InlineField>
 
-          <div className="mt-4 mb-3">
-            <Progress value={progressPct} className="h-2.5 bg-white/10" indicatorClassName="bg-emerald-400" />
+          <div className="mt-4 mb-2">
+            <Progress value={progressPct} className="h-2 bg-white/10" indicatorClassName="bg-emerald-400" />
           </div>
           <div className="flex justify-between text-xs text-white/40">
-            <span>Выплачено {formatRub(paid)}</span>
-            <span>{progressPct}%</span>
+            <span>выплачено {formatRub(paid)} ({progressPct}%)</span>
+            <span>начало {formatRub(loan.startBalance)}</span>
           </div>
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-2 gap-3">
-        <Card className="rounded-2xl border-stone-200">
-          <CardContent className="p-4">
-            <div className="text-xs text-muted-foreground mb-1">Закроешь через</div>
+      {/* Дата закрытия — главная карточка */}
+      <Card className="rounded-2xl border-emerald-200 bg-emerald-50">
+        <CardContent className="p-4 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center shrink-0">
+            <CalendarCheck2 size={20} className="text-emerald-600" />
+          </div>
+          <div className="flex-1">
+            <div className="text-xs text-emerald-700 font-medium">Кредит закроется</div>
+            <div className="text-lg font-bold text-emerald-800 capitalize">{payoffStr}</div>
+          </div>
+          <div className="text-right shrink-0">
             <div className="text-2xl font-bold text-emerald-700">{monthsLeft}</div>
-            <div className="text-xs text-muted-foreground">мес. ({payoffStr})</div>
-          </CardContent>
-        </Card>
-        <Card className="rounded-2xl border-stone-200">
-          <CardContent className="p-4">
-            <div className="text-xs text-muted-foreground mb-1">В месяц</div>
-            <div className="text-2xl font-bold">{formatRub(monthlyPayment)}</div>
-            <div className="text-xs text-muted-foreground">суммарно</div>
-          </CardContent>
-        </Card>
-        <Card className="rounded-2xl border-stone-200">
-          <CardContent className="p-4">
-            <div className="text-xs text-muted-foreground mb-1">Экономия (мес.)</div>
-            <div className="text-2xl font-bold text-emerald-700">~{savedMonths}</div>
-            <div className="text-xs text-muted-foreground">vs. минималка</div>
-          </CardContent>
-        </Card>
-        <Card className="rounded-2xl border-stone-200">
-          <CardContent className="p-4">
-            <div className="text-xs text-muted-foreground mb-1">Выплачено</div>
-            <div className="text-2xl font-bold">{formatRub(paid)}</div>
-            <div className="text-xs text-muted-foreground">из {formatRub(loan.startBalance)}</div>
-          </CardContent>
-        </Card>
-      </div>
+            <div className="text-xs text-emerald-600">месяцев</div>
+          </div>
+        </CardContent>
+      </Card>
 
+      {/* Платежи в месяц */}
       <Card className="rounded-2xl border-stone-200">
         <CardContent className="p-0">
           <div className="px-4 py-3 border-b border-stone-100">
-            <div className="text-sm font-semibold mb-0.5">Структура платежей</div>
+            <div className="text-sm font-semibold">Платежи по кредиту</div>
             <div className="text-xs text-muted-foreground">Нажми на сумму чтобы изменить</div>
           </div>
 
           {[
-            { Icon: Zap,      bg: 'bg-amber-100',  label: 'Досрочный платёж',   sub: 'С зарплаты 15-го',        value: loan.earlyPayment,    onSave: (v: number) => onUpdatePaymentAmount('loan-early', v) },
-            { Icon: Landmark, bg: 'bg-yellow-100', label: 'Обязательный платёж', sub: 'С аванса 2-го числа',    value: loan.mandatoryPayment, onSave: (v: number) => onUpdatePaymentAmount('loan-mandatory', v) },
-            { Icon: BarChart3, bg: 'bg-stone-100', label: 'Начальный долг',      sub: 'Когда начал отслеживать', value: loan.startBalance,    onSave: (v: number) => onUpdateLoan({ startBalance: v }) },
-          ].map((row, i, arr) => (
-            <div key={row.label} className={`flex items-center px-4 py-3.5 gap-3 ${i < arr.length - 1 ? 'border-b border-stone-100' : ''}`}>
+            {
+              Icon: Zap,
+              bg: 'bg-amber-100',
+              iconCls: 'text-amber-600',
+              label: 'Досрочный платёж',
+              sub: '15-го числа, с зарплаты',
+              value: loan.earlyPayment,
+              onSave: (v: number) => onUpdatePaymentAmount('loan-early', v),
+            },
+            {
+              Icon: Landmark,
+              bg: 'bg-blue-100',
+              iconCls: 'text-blue-600',
+              label: 'Обязательный платёж',
+              sub: '2-го числа, с аванса',
+              value: loan.mandatoryPayment,
+              onSave: (v: number) => onUpdatePaymentAmount('loan-mandatory', v),
+            },
+          ].map((row, i) => (
+            <div key={row.label} className={`flex items-center px-4 py-3.5 gap-3 ${i === 0 ? 'border-b border-stone-100' : ''}`}>
               <div className={`w-9 h-9 rounded-xl ${row.bg} flex items-center justify-center shrink-0`}>
-                <row.Icon size={18} className="text-stone-600" />
+                <row.Icon size={18} className={row.iconCls} />
               </div>
               <div className="flex-1">
                 <div className="text-sm font-medium">{row.label}</div>
@@ -156,23 +156,45 @@ export function LoanTracker({ config, onUpdateLoan, onUpdatePaymentAmount }: Pro
               <InlineField
                 value={row.value}
                 onSave={row.onSave}
-                className="flex items-center gap-1 hover:opacity-70 transition-opacity shrink-0"
+                className="flex items-center gap-1 hover:opacity-60 transition-opacity shrink-0"
               >
-                <span className="font-bold text-sm text-stone-600">{formatRub(row.value)}</span>
+                <span className="font-bold text-sm">{formatRub(row.value)}</span>
                 <span className="text-stone-300 text-xs">✏</span>
               </InlineField>
             </div>
           ))}
+
+          {/* Итого */}
+          <div className="flex items-center px-4 py-3 bg-stone-50 rounded-b-2xl border-t border-stone-100">
+            <div className="flex-1 text-sm font-semibold">Итого в месяц</div>
+            <div className="text-sm font-bold">{formatRub(monthlyPayment)}</div>
+          </div>
         </CardContent>
       </Card>
 
-      <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4">
-        <div className="text-sm font-semibold text-emerald-800 mb-1">Правильный путь</div>
-        <div className="text-xs text-emerald-700 leading-relaxed">
-          Платишь {formatRub(monthlyPayment)}/мес вместо минималки ~{formatRub(minMonthlyPayment)}/мес.
-          Экономишь примерно <span className="font-semibold">~{savedMonths} месяцев</span> и много денег на процентах.
-        </div>
-      </div>
+      {/* Начальный долг */}
+      <Card className="rounded-2xl border-stone-200">
+        <CardContent className="p-0">
+          <div className="flex items-center px-4 py-3.5 gap-3">
+            <div className="w-9 h-9 rounded-xl bg-stone-100 flex items-center justify-center shrink-0">
+              <BarChart3 size={18} className="text-stone-500" />
+            </div>
+            <div className="flex-1">
+              <div className="text-sm font-medium">Начальный долг</div>
+              <div className="text-xs text-muted-foreground">Сумма когда начал отслеживать</div>
+            </div>
+            <InlineField
+              value={loan.startBalance}
+              onSave={v => onUpdateLoan({ startBalance: v })}
+              className="flex items-center gap-1 hover:opacity-60 transition-opacity shrink-0"
+            >
+              <span className="font-bold text-sm">{formatRub(loan.startBalance)}</span>
+              <span className="text-stone-300 text-xs">✏</span>
+            </InlineField>
+          </div>
+        </CardContent>
+      </Card>
+
     </div>
   );
 }
