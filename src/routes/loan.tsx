@@ -8,7 +8,7 @@ export const Route = createFileRoute('/loan')({
 })
 
 function LoanPage() {
-  const { config, isLoading, updateLoan } = useConfig()
+  const { config, isLoading, updateLoan, updatePaymentAmount } = useConfig()
   if (isLoading || !config) return <LoanSkeleton />
-  return <LoanTracker config={config} onUpdateLoan={updateLoan} />
+  return <LoanTracker config={config} onUpdateLoan={updateLoan} onUpdatePaymentAmount={updatePaymentAmount} />
 }

@@ -68,10 +68,13 @@ export function useConfig() {
     }));
 
   const updatePaymentAmount = (id: string, amount: number) =>
-    update(c => ({
-      ...c,
-      payments: c.payments.map(p => p.id === id ? { ...p, amount } : p),
-    }));
+    update(c => {
+      const payments = c.payments.map(p => p.id === id ? { ...p, amount } : p);
+      const loan = { ...c.loan };
+      if (id === 'loan-early') loan.earlyPayment = amount;
+      if (id === 'loan-mandatory') loan.mandatoryPayment = amount;
+      return { ...c, payments, loan };
+    });
 
   const deleteCarsharingTag = (tagId: string) =>
     update(c => ({

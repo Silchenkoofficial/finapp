@@ -10,6 +10,7 @@ import { Button } from './ui/button';
 interface Props {
   config: FinanceConfig;
   onUpdateLoan: (updates: Partial<FinanceConfig['loan']>) => void;
+  onUpdatePaymentAmount: (id: string, amount: number) => void;
 }
 
 function InlineField({
@@ -60,7 +61,7 @@ function InlineField({
   );
 }
 
-export function LoanTracker({ config, onUpdateLoan }: Props) {
+export function LoanTracker({ config, onUpdateLoan, onUpdatePaymentAmount }: Props) {
   const { loan } = config;
   const monthlyPayment = loan.earlyPayment + loan.mandatoryPayment;
   const monthsLeft = loanMonthsLeft(loan.currentBalance, monthlyPayment);
@@ -140,11 +141,11 @@ export function LoanTracker({ config, onUpdateLoan }: Props) {
           </div>
 
           {[
-            { Icon: Zap,      bg: 'bg-amber-100',  label: 'Досрочный платёж',  sub: 'С зарплаты 15-го',       value: loan.earlyPayment,    key: 'earlyPayment'    as const },
-            { Icon: Landmark, bg: 'bg-yellow-100', label: 'Обязательный платёж', sub: 'С аванса 2-го числа',   value: loan.mandatoryPayment, key: 'mandatoryPayment' as const },
-            { Icon: BarChart3, bg: 'bg-stone-100', label: 'Начальный долг',     sub: 'Когда начал отслеживать', value: loan.startBalance,    key: 'startBalance'    as const },
+            { Icon: Zap,      bg: 'bg-amber-100',  label: 'Досрочный платёж',   sub: 'С зарплаты 15-го',        value: loan.earlyPayment,    onSave: (v: number) => onUpdatePaymentAmount('loan-early', v) },
+            { Icon: Landmark, bg: 'bg-yellow-100', label: 'Обязательный платёж', sub: 'С аванса 2-го числа',    value: loan.mandatoryPayment, onSave: (v: number) => onUpdatePaymentAmount('loan-mandatory', v) },
+            { Icon: BarChart3, bg: 'bg-stone-100', label: 'Начальный долг',      sub: 'Когда начал отслеживать', value: loan.startBalance,    onSave: (v: number) => onUpdateLoan({ startBalance: v }) },
           ].map((row, i, arr) => (
-            <div key={row.key} className={`flex items-center px-4 py-3.5 gap-3 ${i < arr.length - 1 ? 'border-b border-stone-100' : ''}`}>
+            <div key={row.label} className={`flex items-center px-4 py-3.5 gap-3 ${i < arr.length - 1 ? 'border-b border-stone-100' : ''}`}>
               <div className={`w-9 h-9 rounded-xl ${row.bg} flex items-center justify-center shrink-0`}>
                 <row.Icon size={18} className="text-stone-600" />
               </div>
@@ -154,7 +155,7 @@ export function LoanTracker({ config, onUpdateLoan }: Props) {
               </div>
               <InlineField
                 value={row.value}
-                onSave={v => onUpdateLoan({ [row.key]: v })}
+                onSave={row.onSave}
                 className="flex items-center gap-1 hover:opacity-70 transition-opacity shrink-0"
               >
                 <span className="font-bold text-sm text-stone-600">{formatRub(row.value)}</span>
